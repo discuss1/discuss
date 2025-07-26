@@ -5,6 +5,9 @@ import sys
 import subprocess
 import signal
 import time
+import urllib.request
+import urllib.error
+import threading
 
 PORT = 12000
 DJANGO_PORT = 8000
@@ -18,94 +21,223 @@ django_process = subprocess.Popen(
     bufsize=1
 )
 
+# Function to print Django output
+def print_django_output():
+    for line in iter(django_process.stdout.readline, ''):
+        print(f"Django: {line.strip()}")
+
+# Start thread to print Django output
+threading.Thread(target=print_django_output, daemon=True).start()
+
 # Give Django time to start
-time.sleep(2)
+time.sleep(3)
+print("Django server should be running now")
 
 class ProxyHTTPRequestHandler(http.server.BaseHTTPRequestHandler):
+    def log_message(self, format, *args):
+        print(f"{self.client_address[0]} - {format % args}")
+    
+    def add_cors_headers(self):
+        self.send_header('Access-Control-Allow-Origin', '*')
+        self.send_header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, PUT, DELETE')
+        self.send_header('Access-Control-Allow-Headers', 'X-Requested-With, Content-Type, Authorization')
+    
     def do_HEAD(self):
         self.do_GET(body=False)
         
     def do_GET(self, body=True):
-        import urllib.request
-        
-        # Add CORS headers
-        self.send_response(200)
-        self.send_header('Access-Control-Allow-Origin', '*')
-        self.send_header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, PUT, DELETE')
-        self.send_header('Access-Control-Allow-Headers', 'X-Requested-With, Content-Type, Authorization')
-        
         # Forward the request to Django
         url = f'http://localhost:{DJANGO_PORT}{self.path}'
+        print(f"Proxying GET request to: {url}")
         
         try:
-            response = urllib.request.urlopen(url)
+            req = urllib.request.Request(url, method='GET')
+            # Copy headers from client request to Django request
+            for header in self.headers:
+                if header.lower() not in ('host', 'connection'):
+                    req.add_header(header, self.headers[header])
+                    
+            response = urllib.request.urlopen(req)
+            
+            # Copy response status
+            self.send_response(response.status)
+            
+            # Add CORS headers
+            self.add_cors_headers()
             
             # Copy response headers
             for header in response.headers:
-                self.send_header(header, response.headers[header])
-                
+                if header.lower() not in ('server', 'date', 'connection'):
+                    self.send_header(header, response.headers[header])
+                    
             self.end_headers()
             
             # Copy response body
             if body:
-                self.wfile.write(response.read())
+                response_data = response.read()
+                self.wfile.write(response_data)
+                print(f"Sent {len(response_data)} bytes in response")
                 
-        except Exception as e:
-            self.send_response(500)
-            self.end_headers()
-            self.wfile.write(str(e).encode())
-    
-    def do_POST(self):
-        import urllib.request
-        import urllib.error
-        
-        content_length = int(self.headers['Content-Length'])
-        post_data = self.rfile.read(content_length)
-        
-        # Forward the request to Django
-        url = f'http://localhost:{DJANGO_PORT}{self.path}'
-        
-        try:
-            headers = {k: v for k, v in self.headers.items()}
-            req = urllib.request.Request(url, data=post_data, headers=headers, method='POST')
-            response = urllib.request.urlopen(req)
-            
-            # Copy response status and headers
-            self.send_response(response.status)
-            
-            # Add CORS headers
-            self.send_header('Access-Control-Allow-Origin', '*')
-            self.send_header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, PUT, DELETE')
-            self.send_header('Access-Control-Allow-Headers', 'X-Requested-With, Content-Type, Authorization')
-            
-            for header in response.headers:
-                self.send_header(header, response.headers[header])
-                
-            self.end_headers()
-            
-            # Copy response body
-            self.wfile.write(response.read())
-            
         except urllib.error.HTTPError as e:
+            print(f"HTTP Error: {e.code} - {e.reason}")
             self.send_response(e.code)
+            self.add_cors_headers()
             self.end_headers()
             self.wfile.write(e.read())
         except Exception as e:
-            self.send_response(500)
+            print(f"Error in GET: {str(e)}")
+            self.send_response(502)  # Bad Gateway
+            self.add_cors_headers()
             self.end_headers()
-            self.wfile.write(str(e).encode())
+            self.wfile.write(f"Proxy Error: {str(e)}".encode())
+    
+    def do_POST(self):
+        content_length = int(self.headers.get('Content-Length', 0))
+        post_data = self.rfile.read(content_length) if content_length > 0 else None
+        
+        # Forward the request to Django
+        url = f'http://localhost:{DJANGO_PORT}{self.path}'
+        print(f"Proxying POST request to: {url}")
+        
+        try:
+            headers = {}
+            # Copy headers from client request to Django request
+            for header in self.headers:
+                if header.lower() not in ('host', 'connection'):
+                    headers[header] = self.headers[header]
+                    
+            req = urllib.request.Request(url, data=post_data, headers=headers, method='POST')
+            response = urllib.request.urlopen(req)
+            
+            # Copy response status
+            self.send_response(response.status)
+            
+            # Add CORS headers
+            self.add_cors_headers()
+            
+            # Copy response headers
+            for header in response.headers:
+                if header.lower() not in ('server', 'date', 'connection'):
+                    self.send_header(header, response.headers[header])
+                    
+            self.end_headers()
+            
+            # Copy response body
+            response_data = response.read()
+            self.wfile.write(response_data)
+            print(f"Sent {len(response_data)} bytes in response")
+            
+        except urllib.error.HTTPError as e:
+            print(f"HTTP Error: {e.code} - {e.reason}")
+            self.send_response(e.code)
+            self.add_cors_headers()
+            self.end_headers()
+            self.wfile.write(e.read())
+        except Exception as e:
+            print(f"Error in POST: {str(e)}")
+            self.send_response(502)  # Bad Gateway
+            self.add_cors_headers()
+            self.end_headers()
+            self.wfile.write(f"Proxy Error: {str(e)}".encode())
     
     def do_PUT(self):
-        self.do_POST()
+        content_length = int(self.headers.get('Content-Length', 0))
+        put_data = self.rfile.read(content_length) if content_length > 0 else None
+        
+        # Forward the request to Django
+        url = f'http://localhost:{DJANGO_PORT}{self.path}'
+        print(f"Proxying PUT request to: {url}")
+        
+        try:
+            headers = {}
+            # Copy headers from client request to Django request
+            for header in self.headers:
+                if header.lower() not in ('host', 'connection'):
+                    headers[header] = self.headers[header]
+                    
+            req = urllib.request.Request(url, data=put_data, headers=headers, method='PUT')
+            response = urllib.request.urlopen(req)
+            
+            # Copy response status
+            self.send_response(response.status)
+            
+            # Add CORS headers
+            self.add_cors_headers()
+            
+            # Copy response headers
+            for header in response.headers:
+                if header.lower() not in ('server', 'date', 'connection'):
+                    self.send_header(header, response.headers[header])
+                    
+            self.end_headers()
+            
+            # Copy response body
+            response_data = response.read()
+            self.wfile.write(response_data)
+            print(f"Sent {len(response_data)} bytes in response")
+            
+        except urllib.error.HTTPError as e:
+            print(f"HTTP Error: {e.code} - {e.reason}")
+            self.send_response(e.code)
+            self.add_cors_headers()
+            self.end_headers()
+            self.wfile.write(e.read())
+        except Exception as e:
+            print(f"Error in PUT: {str(e)}")
+            self.send_response(502)  # Bad Gateway
+            self.add_cors_headers()
+            self.end_headers()
+            self.wfile.write(f"Proxy Error: {str(e)}".encode())
         
     def do_DELETE(self):
-        self.do_POST()
+        # Forward the request to Django
+        url = f'http://localhost:{DJANGO_PORT}{self.path}'
+        print(f"Proxying DELETE request to: {url}")
+        
+        try:
+            headers = {}
+            # Copy headers from client request to Django request
+            for header in self.headers:
+                if header.lower() not in ('host', 'connection'):
+                    headers[header] = self.headers[header]
+                    
+            req = urllib.request.Request(url, headers=headers, method='DELETE')
+            response = urllib.request.urlopen(req)
+            
+            # Copy response status
+            self.send_response(response.status)
+            
+            # Add CORS headers
+            self.add_cors_headers()
+            
+            # Copy response headers
+            for header in response.headers:
+                if header.lower() not in ('server', 'date', 'connection'):
+                    self.send_header(header, response.headers[header])
+                    
+            self.end_headers()
+            
+            # Copy response body
+            response_data = response.read()
+            self.wfile.write(response_data)
+            print(f"Sent {len(response_data)} bytes in response")
+            
+        except urllib.error.HTTPError as e:
+            print(f"HTTP Error: {e.code} - {e.reason}")
+            self.send_response(e.code)
+            self.add_cors_headers()
+            self.end_headers()
+            self.wfile.write(e.read())
+        except Exception as e:
+            print(f"Error in DELETE: {str(e)}")
+            self.send_response(502)  # Bad Gateway
+            self.add_cors_headers()
+            self.end_headers()
+            self.wfile.write(f"Proxy Error: {str(e)}".encode())
         
     def do_OPTIONS(self):
         self.send_response(200)
-        self.send_header('Access-Control-Allow-Origin', '*')
-        self.send_header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, PUT, DELETE')
-        self.send_header('Access-Control-Allow-Headers', 'X-Requested-With, Content-Type, Authorization')
+        self.add_cors_headers()
         self.end_headers()
 
 if __name__ == "__main__":
