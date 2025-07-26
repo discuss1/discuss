@@ -1,4 +1,5 @@
 from django.shortcuts import render
+import datetime
 from profiles.serializers import UserSerializer
 from django.contrib.auth.models import User
 from core.views import BaseViewSet
@@ -12,6 +13,7 @@ from groups.serializers import GroupInviteReadOnlySerializer, GroupSerializer, M
 from posts.serializers import PostVoteHeavySerializer
 from bookmarks.serializers import PostBookmarkReadOnlySerializer
 from bookmarks.models import PostBookmark
+from profiles.models import UserMetaInfo
 
 
 class ProfileViewSet(BaseViewSet):

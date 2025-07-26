@@ -46,7 +46,7 @@ export class PostService {
   }
 
   removePostVote(uuid: string) {
-    return this.http.delete(this.baseUrl + 'posts/' + uuid + '/remove_vote/', {});
+    return this.http.put(this.baseUrl + 'posts/' + uuid + '/remove_vote/', {});
   }
 
   filterPosts(page: number, title: string, status: string, group: string, username: string) {
