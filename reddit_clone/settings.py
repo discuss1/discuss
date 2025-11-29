@@ -72,8 +72,7 @@ INSTALLED_APPS = [
     'dj_rest_auth.registration',
     'corsheaders',
     'guardian',
-    'ckeditor',
-    'ckeditor_uploader',
+    'django_ckeditor_5',
     'django_filters',
     'drf_yasg',
     'core',
@@ -185,12 +184,14 @@ AUTHENTICATION_BACKENDS = (
 
 HOME_EMAIL = 'admin@gmail.com'
 DEFAULT_FROM_GMAIL = 'admin@gmail.com'
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = 'smtp.gmail.com'
-EMAIL_HOST_USER = 'admin@gmail.com'
-EMAIL_HOST_PASSWORD = 'admin123'
-EMAIL_PORT = 587
-EMAIL_USE_TLS = True
+# Use console backend for development to avoid email server issues
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+# EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+# EMAIL_HOST = 'smtp.gmail.com'
+# EMAIL_HOST_USER = 'admin@gmail.com'
+# EMAIL_HOST_PASSWORD = 'admin123'
+# EMAIL_PORT = 587
+# EMAIL_USE_TLS = True
 
 LOGIN_REDIRECT_URL  = 'angular_app'
 LOGOUT_REDIRECT_URL = 'angular_app'
@@ -311,43 +312,83 @@ CORS_ALLOWED_ORIGINS = [origin.strip() for origin in cors_origins.split(',') if 
 
 
 ####################################
-    ##  CKEDITOR CONFIGURATION ##
+    ##  CKEDITOR 5 CONFIGURATION ##
 ####################################
 
-CKEDITOR_JQUERY_URL = 'https://ajax.googleapis.com/ajax/libs/jquery/2.2.4/jquery.min.js'
-
-CKEDITOR_UPLOAD_PATH = 'uploads/'
-CKEDITOR_IMAGE_BACKEND = "pillow"
-
-CKEDITOR_CONFIGS = {
+# CKEditor 5 settings - SECURITY: Migrated from vulnerable CKEditor 4.22.1
+CKEDITOR_5_CONFIGS = {
     'default': {
-        'toolbar': 'Custom',
-        'toolbarCanCollapse': True,
-        'toolbar_Custom': [
-            {'name': 'clipboard', 'items': ['Source', '-', 'Cut', 'Copy', 'Paste', '-', 'Undo', 'Redo', '-', 'Scayt']},
-            '/',
-            {'name': 'basicstyles',
-             'items': ['Bold', 'Italic', 'Underline', 'Strike', 'Subscript', 'Superscript', '-', 'RemoveFormat']},
-            {'name': 'paragraph',
-             'items': ['NumberedList', 'BulletedList','Outdent', 'Indent','Blockquote', 'CreateDiv',
-                       'JustifyLeft', 'JustifyCenter', 'JustifyRight', 'JustifyBlock', '-', 'BidiLtr', 'BidiRtl',]},
-            {'name': 'links', 'items': ['Link', 'Unlink', 'Anchor']},
-            {'name': 'insert',
-             'items': ['Image', 'Table', 'HorizontalRule', 'Smiley', 'SpecialChar', 'PageBreak', 'Iframe']},
-            '/',
-            {'name': 'styles', 'items': ['Styles', 'Format', 'Font', 'FontSize']},
-            {'name': 'colors', 'items': ['TextColor', 'BGColor']},
-            {'name': 'tools', 'items': ['Maximize', 'ShowBlocks','Preview',]}
+        'toolbar': [
+            'heading', '|', 'bold', 'italic', 'underline', 'strikethrough', 
+            'subscript', 'superscript', '|', 'link', 'bulletedList', 
+            'numberedList', 'blockQuote', '|', 'outdent', 'indent', '|',
+            'insertTable', 'imageUpload', 'mediaEmbed', '|', 'undo', 'redo',
+            'sourceEditing', '|', 'removeFormat', 'findAndReplace'
         ],
-        'extraPlugins': ','.join([
-            'div',
-            'autolink',
-            'autoembed',
-            'scayt',
-            'lineutils',
-            'clipboard',
-        ]),
+        'height': 300,
+        'width': '100%',
+        'language': 'en',
+        'image': {
+            'toolbar': [
+                'imageTextAlternative', 'imageStyle:full', 'imageStyle:side'
+            ]
+        },
+        'table': {
+            'contentToolbar': [
+                'tableColumn', 'tableRow', 'mergeTableCells',
+                'tableProperties', 'tableCellProperties'
+            ]
+        },
+        'heading': {
+            'options': [
+                {'model': 'paragraph', 'title': 'Paragraph', 'class': 'ck-heading_paragraph'},
+                {'model': 'heading1', 'view': 'h1', 'title': 'Heading 1', 'class': 'ck-heading_heading1'},
+                {'model': 'heading2', 'view': 'h2', 'title': 'Heading 2', 'class': 'ck-heading_heading2'},
+                {'model': 'heading3', 'view': 'h3', 'title': 'Heading 3', 'class': 'ck-heading_heading3'},
+            ]
+        }
+    },
+    'extends': {
+        'toolbar': [
+            'heading', '|', 'bold', 'italic', 'underline', 'strikethrough',
+            'code', 'subscript', 'superscript', '|', 'link', 'bulletedList',
+            'numberedList', 'todoList', 'blockQuote', 'codeBlock', '|',
+            'outdent', 'indent', 'alignment', '|', 'insertTable', 'imageUpload',
+            'mediaEmbed', 'horizontalLine', '|', 'fontSize', 'fontColor',
+            'fontBackgroundColor', 'highlight', '|', 'undo', 'redo',
+            'sourceEditing', '|', 'removeFormat', 'findAndReplace', 'selectAll'
+        ],
+        'height': 400,
+        'width': '100%',
+        'language': 'en',
+        'image': {
+            'toolbar': [
+                'imageTextAlternative', 'imageStyle:full', 'imageStyle:side',
+                'imageStyle:alignLeft', 'imageStyle:alignCenter', 'imageStyle:alignRight'
+            ]
+        },
+        'table': {
+            'contentToolbar': [
+                'tableColumn', 'tableRow', 'mergeTableCells',
+                'tableProperties', 'tableCellProperties'
+            ]
+        },
+        'heading': {
+            'options': [
+                {'model': 'paragraph', 'title': 'Paragraph', 'class': 'ck-heading_paragraph'},
+                {'model': 'heading1', 'view': 'h1', 'title': 'Heading 1', 'class': 'ck-heading_heading1'},
+                {'model': 'heading2', 'view': 'h2', 'title': 'Heading 2', 'class': 'ck-heading_heading2'},
+                {'model': 'heading3', 'view': 'h3', 'title': 'Heading 3', 'class': 'ck-heading_heading3'},
+                {'model': 'heading4', 'view': 'h4', 'title': 'Heading 4', 'class': 'ck-heading_heading4'},
+            ]
+        }
     }
 }
+
+# Upload settings for CKEditor 5
+CKEDITOR_5_UPLOAD_PATH = 'uploads/ckeditor5/'
+CKEDITOR_5_IMAGE_BACKEND = "pillow"
+CKEDITOR_5_MAX_FILE_SIZE = 5  # Max size in MB
+CKEDITOR_5_UPLOAD_FILE_TYPES = ['jpeg', 'jpg', 'png', 'gif', 'bmp', 'webp', 'tiff']
 
 ###################################

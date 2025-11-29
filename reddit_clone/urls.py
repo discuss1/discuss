@@ -41,6 +41,8 @@ urlpatterns = [
     path('accounts/', include('allauth.urls')),
     re_path(r'^rest-auth/', include('dj_rest_auth.urls')),
     re_path(r'^rest-auth/registration/', include('dj_rest_auth.registration.urls')),
+    # CKEditor 5 URLs - SECURITY: Migrated from vulnerable CKEditor 4
+    path('ckeditor5/', include('django_ckeditor_5.urls')),
     path('', include('posts.urls')),
     path('', include('tags.urls')),
     path('', include('groups.urls')),
