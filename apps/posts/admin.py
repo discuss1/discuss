@@ -1,11 +1,11 @@
 from django import forms
 from django.contrib import admin
-from ckeditor.widgets import CKEditorWidget
+from django_ckeditor_5.widgets import CKEditor5Widget
 from posts.models import Post
 
 
 class PostForm(forms.ModelForm):
-    description = forms.CharField(widget=CKEditorWidget())
+    content = forms.CharField(widget=CKEditor5Widget(config_name='extends'))
 
     class Meta:
         model = Post
