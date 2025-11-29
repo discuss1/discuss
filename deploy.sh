@@ -20,7 +20,24 @@ echo "✅ Virtual environment activated"
 
 # Install Python dependencies
 echo "📦 Installing Python dependencies..."
-pip install -r requirements.txt
+echo "🔄 Upgrading pip first..."
+pip install --upgrade pip
+
+echo "📦 Installing from Linux Mint optimized requirements..."
+if pip install -r requirements_linux_mint.txt; then
+    echo "✅ Linux Mint requirements installed successfully"
+else
+    echo "⚠️ Linux Mint requirements failed, trying original requirements..."
+    pip install -r requirements.txt
+fi
+
+# Verify critical packages
+echo "🔍 Verifying critical packages..."
+python -c "import dj_rest_auth; print('✅ dj-rest-auth installed')" || {
+    echo "❌ dj-rest-auth missing, installing manually..."
+    pip install dj-rest-auth==4.0.1
+}
+python -c "import django; print(f'✅ Django {django.get_version()} installed')"
 
 # Setup database
 echo "🗄️ Setting up database..."

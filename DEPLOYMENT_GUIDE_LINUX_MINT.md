@@ -74,15 +74,32 @@ python3 -m venv venv
 source venv/bin/activate
 
 # Your prompt should now show (venv)
+# Verify you're in the virtual environment
+which python  # Should show path with 'venv' in it
+python --version  # Should show Python 3.12+
 ```
+
+**⚠️ IMPORTANT**: Always make sure you see `(venv)` in your terminal prompt before running any Python commands!
 
 ### 3.2 Install Python Dependencies
 ```bash
-# Install Django and dependencies
+# Option 1: Use Linux Mint optimized requirements (RECOMMENDED)
+pip install -r requirements_linux_mint.txt
+
+# Option 2: Use original requirements (if Option 1 fails)
 pip install -r requirements.txt
 
-# If requirements.txt has issues, install manually:
-pip install Django==3.2.25 djangorestframework python-decouple Pillow
+# Option 3: Manual installation (if both above fail)
+pip install Django==3.2.25 djangorestframework==3.15.2 dj-rest-auth==4.0.1 django-allauth==0.57.2 django-cors-headers==4.3.1 Pillow==10.4.0 python-dotenv==1.0.1
+```
+
+### 3.2.1 Verify Installation
+```bash
+# Check if dj-rest-auth is installed correctly
+python -c "import dj_rest_auth; print('dj-rest-auth installed successfully')"
+
+# Check Django version
+python -c "import django; print(f'Django version: {django.get_version()}')"
 ```
 
 ### 3.3 Configure Database
@@ -182,6 +199,33 @@ Then access:
 ## 🐛 Troubleshooting
 
 ### Common Issues and Solutions
+
+#### 0. ModuleNotFoundError: No module named 'dj_rest_auth'
+This is the most common error when setting up the project.
+
+**Solution:**
+```bash
+# 1. Make sure you're in the virtual environment
+source venv/bin/activate
+# Your prompt should show (venv)
+
+# 2. Install the specific package
+pip install dj-rest-auth==4.0.1
+
+# 3. If that fails, try upgrading pip first
+pip install --upgrade pip
+pip install dj-rest-auth==4.0.1
+
+# 4. Verify installation
+python -c "import dj_rest_auth; print('SUCCESS: dj-rest-auth is installed')"
+
+# 5. If still failing, use the Linux Mint requirements
+pip install -r requirements_linux_mint.txt
+
+# 6. Last resort - reinstall everything
+pip uninstall -y -r requirements.txt
+pip install -r requirements_linux_mint.txt
+```
 
 #### 1. Node.js Version Issues
 ```bash

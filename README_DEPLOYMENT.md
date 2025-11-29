@@ -15,6 +15,12 @@ python manage.py runserver
 ### Option 2: Manual Setup
 See the complete guide: **[DEPLOYMENT_GUIDE_LINUX_MINT.md](./DEPLOYMENT_GUIDE_LINUX_MINT.md)**
 
+### Option 3: Fix Common Error
+If you get `ModuleNotFoundError: No module named 'dj_rest_auth'`:
+```bash
+./fix_dj_rest_auth.sh
+```
+
 ## 🌐 Access the Application
 
 After deployment, open your browser to:
