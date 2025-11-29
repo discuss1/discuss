@@ -2,14 +2,31 @@ import http.server
 import socketserver
 import os
 import sys
+import mimetypes
 
 PORT = 12001
 DIRECTORY = os.path.join(os.path.dirname(os.path.abspath(__file__)), 
                          "static/frontend/reddit-app/dist")
 
+# Ensure all common MIME types are registered
+mimetypes.add_type('application/javascript', '.js')
+mimetypes.add_type('text/css', '.css')
+mimetypes.add_type('text/html', '.html')
+mimetypes.add_type('image/svg+xml', '.svg')
+mimetypes.add_type('image/png', '.png')
+mimetypes.add_type('image/jpeg', '.jpg')
+mimetypes.add_type('image/jpeg', '.jpeg')
+mimetypes.add_type('image/gif', '.gif')
+mimetypes.add_type('font/woff', '.woff')
+mimetypes.add_type('font/woff2', '.woff2')
+mimetypes.add_type('font/ttf', '.ttf')
+
 class CORSHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, directory=DIRECTORY, **kwargs)
+
+    def log_message(self, format, *args):
+        print(f"{self.client_address[0]} - {format % args}")
 
     def end_headers(self):
         self.send_header('Access-Control-Allow-Origin', '*')
@@ -22,6 +39,8 @@ class CORSHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
         self.end_headers()
         
     def do_GET(self):
+        print(f"GET request for: {self.path}")
+        
         # Redirect root to /django_reddit/
         if self.path == '/':
             self.send_response(301)
@@ -31,27 +50,35 @@ class CORSHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
         
         # Handle /django_reddit/ path
         if self.path.startswith('/django_reddit/'):
-            # Check for specific files first
-            if self.path == '/django_reddit/styles.css':
-                self.path = '/styles.css'
-            elif self.path == '/django_reddit/runtime.js':
-                self.path = '/runtime.js'
-            elif self.path == '/django_reddit/polyfills.js':
-                self.path = '/polyfills.js'
-            elif self.path == '/django_reddit/main.js':
-                self.path = '/main.js'
-            elif self.path.startswith('/django_reddit/assets/'):
-                self.path = self.path.replace('/django_reddit/assets/', '/assets/')
+            # Strip the /django_reddit/ prefix for all files
+            clean_path = self.path[len('/django_reddit/'):]
+            
+            # If it's a specific file, serve it
+            file_path = os.path.join(DIRECTORY, clean_path)
+            if clean_path and os.path.exists(file_path) and os.path.isfile(file_path):
+                print(f"Serving file: {file_path}")
+                self.path = '/' + clean_path
             else:
-                # For SPA routing, serve index.html for paths that don't match files
-                file_path = os.path.join(DIRECTORY, self.path[len('/django_reddit/'):])
-                if not os.path.exists(file_path) or not os.path.isfile(file_path):
-                    self.path = '/index.html'
-                else:
-                    # Remove the /django_reddit/ prefix for direct file access
-                    self.path = self.path[len('/django_reddit/'):]
+                # For SPA routing, serve index.html
+                print(f"File not found, serving index.html for SPA routing: {self.path}")
+                self.path = '/index.html'
         
-        return super().do_GET()
+        try:
+            return super().do_GET()
+        except Exception as e:
+            print(f"Error serving {self.path}: {str(e)}")
+            self.send_error(500, f"Server Error: {str(e)}")
+            
+    def guess_type(self, path):
+        """Guess the type of a file based on its extension."""
+        base, ext = os.path.splitext(path)
+        if ext in self.extensions_map:
+            return self.extensions_map[ext]
+        ext = ext.lower()
+        if ext in self.extensions_map:
+            return self.extensions_map[ext]
+        else:
+            return 'application/octet-stream'
 
 if __name__ == "__main__":
     print(f"Serving at http://0.0.0.0:{PORT}")
