@@ -1,0 +1,46 @@
+# Updated requirements with safe updates first
+# Security and minor updates
+asgiref==3.11.0
+certifi==2025.11.12
+cffi==2.0.0
+charset-normalizer==3.4.4
+cryptography==46.0.3
+defusedxml==0.7.1
+
+# Keep Django 3.1.x for now - major update needs migration planning
+Django==3.1.14
+
+# Conservative updates for Django extensions (maintain compatibility)
+django-allauth==0.51.0  # Keep current - compatible with Django 3.1
+django-ckeditor==5.9.0  # Keep current - newer versions require Django 3.2+
+django-cors-headers==3.10.0  # Keep current - newer versions may require Django 3.2+
+django-filter==2.4.0  # Keep current - major version jump
+django-guardian==2.4.0  # Keep current - newer versions may require Django 3.2+
+django-js-asset==3.1.2
+django-rest-auth==0.9.5
+djangorestframework==3.16.1
+drf-nested-routers==0.95.0
+drf-yasg==1.21.11
+gunicorn==23.0.0
+idna==3.11
+inflection==0.5.1
+oauthlib==3.3.1
+packaging==25.0
+Pillow==9.5.0  # Keep current - major version jump needs testing
+pycparser==2.23
+PyJWT==2.10.1
+python3-openid==3.2.0
+pytz==2025.2
+PyYAML==6.0.3
+requests==2.32.5
+requests-oauthlib==2.0.0
+six==1.17.0
+sqlparse==0.5.4
+uritemplate==4.2.0
+urllib3==1.26.12  # Keep current - v2.x has breaking changes
+whitenoise==6.11.0
+
+# Database support - safe updates
+psycopg2-binary==2.9.11
+dj-database-url==3.0.1
+python-dotenv==1.2.1
