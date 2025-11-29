@@ -4,7 +4,7 @@ This guide will help you deploy the Django Reddit application on your Linux Mint
 
 ## 📦 Current Application Versions
 
-- **Django**: 4.2.16 LTS ✅ (upgraded from 3.2.25)
+- **Django**: 5.1.3 Latest Stable ✅ (upgraded from 4.2.16 LTS)
 - **Angular**: 11.2.14 ✅ (upgraded from 10.2.5)
 - **Node.js**: 18.20.8 LTS
 - **Python**: 3.12+
