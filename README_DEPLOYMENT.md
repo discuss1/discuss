@@ -15,12 +15,6 @@ python manage.py runserver
 ### Option 2: Manual Setup
 See the complete guide: **[DEPLOYMENT_GUIDE_LINUX_MINT.md](./DEPLOYMENT_GUIDE_LINUX_MINT.md)**
 
-### Option 3: Fix Common Error
-If you get `ModuleNotFoundError: No module named 'dj_rest_auth'`:
-```bash
-./fix_dj_rest_auth.sh
-```
-
 ## 🌐 Access the Application
 
 After deployment, open your browser to:
@@ -37,8 +31,9 @@ After deployment, open your browser to:
 ## 🔧 Current Versions
 
 - **Angular**: 11.2.14 (upgraded from 10.2.5)
-- **Django**: 3.2.25
-- **Node.js**: 18.x (required for compatibility)
+- **Django**: 3.2.25 LTS (stable and compatible)
+- **Node.js**: 18.x (required for Angular 11)
+- **dj-rest-auth**: 4.0.1 (compatible with Django 3.2)
 
 ## 📚 Documentation
 

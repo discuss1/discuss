@@ -23,21 +23,13 @@ echo "📦 Installing Python dependencies..."
 echo "🔄 Upgrading pip first..."
 pip install --upgrade pip
 
-echo "📦 Installing from Linux Mint optimized requirements..."
-if pip install -r requirements_linux_mint.txt; then
-    echo "✅ Linux Mint requirements installed successfully"
-else
-    echo "⚠️ Linux Mint requirements failed, trying original requirements..."
-    pip install -r requirements.txt
-fi
+echo "📦 Installing requirements..."
+pip install -r requirements.txt
 
 # Verify critical packages
-echo "🔍 Verifying critical packages..."
-python -c "import dj_rest_auth; print('✅ dj-rest-auth installed')" || {
-    echo "❌ dj-rest-auth missing, installing manually..."
-    pip install dj-rest-auth==4.0.1
-}
+echo "🔍 Verifying installation..."
 python -c "import django; print(f'✅ Django {django.get_version()} installed')"
+python -c "import dj_rest_auth; print('✅ dj-rest-auth installed')"
 
 # Setup database
 echo "🗄️ Setting up database..."
