@@ -3,6 +3,7 @@ import socketserver
 import os
 import sys
 import mimetypes
+import urllib.parse
 
 PORT = 12001
 DIRECTORY = os.path.join(os.path.dirname(os.path.abspath(__file__)), 
@@ -32,6 +33,8 @@ class CORSHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
         self.send_header('Access-Control-Allow-Origin', '*')
         self.send_header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, PUT, DELETE')
         self.send_header('Access-Control-Allow-Headers', 'X-Requested-With, Content-Type, Authorization')
+        # Prevent downloads by ensuring proper content-type
+        self.send_header('X-Content-Type-Options', 'nosniff')
         super().end_headers()
 
     def do_OPTIONS(self):
@@ -53,30 +56,88 @@ class CORSHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             # Strip the /django_reddit/ prefix for all files
             clean_path = self.path[len('/django_reddit/'):]
             
+            # If empty path or ends with /, serve index.html
+            if not clean_path or clean_path.endswith('/'):
+                print(f"Serving index.html for path: {self.path}")
+                self.serve_index_html()
+                return
+            
             # If it's a specific file, serve it
             file_path = os.path.join(DIRECTORY, clean_path)
-            if clean_path and os.path.exists(file_path) and os.path.isfile(file_path):
+            if os.path.exists(file_path) and os.path.isfile(file_path):
                 print(f"Serving file: {file_path}")
-                self.path = '/' + clean_path
+                self.serve_file(clean_path)
+                return
             else:
                 # For SPA routing, serve index.html
                 print(f"File not found, serving index.html for SPA routing: {self.path}")
-                self.path = '/index.html'
+                self.serve_index_html()
+                return
         
+        # Default handling
         try:
             return super().do_GET()
         except Exception as e:
             print(f"Error serving {self.path}: {str(e)}")
             self.send_error(500, f"Server Error: {str(e)}")
+    
+    def serve_index_html(self):
+        """Serve the index.html file with proper content type"""
+        index_path = os.path.join(DIRECTORY, 'index.html')
+        try:
+            with open(index_path, 'rb') as f:
+                content = f.read()
+            
+            self.send_response(200)
+            self.send_header('Content-Type', 'text/html; charset=utf-8')
+            self.send_header('Content-Length', str(len(content)))
+            self.end_headers()
+            self.wfile.write(content)
+        except Exception as e:
+            print(f"Error serving index.html: {str(e)}")
+            self.send_error(500, f"Error serving index.html: {str(e)}")
+    
+    def serve_file(self, file_path):
+        """Serve a specific file with proper content type"""
+        full_path = os.path.join(DIRECTORY, file_path)
+        try:
+            with open(full_path, 'rb') as f:
+                content = f.read()
+            
+            # Determine content type
+            content_type, _ = mimetypes.guess_type(full_path)
+            if not content_type:
+                if file_path.endswith('.js'):
+                    content_type = 'application/javascript'
+                elif file_path.endswith('.css'):
+                    content_type = 'text/css'
+                elif file_path.endswith('.html'):
+                    content_type = 'text/html; charset=utf-8'
+                else:
+                    content_type = 'application/octet-stream'
+            
+            self.send_response(200)
+            self.send_header('Content-Type', content_type)
+            self.send_header('Content-Length', str(len(content)))
+            self.end_headers()
+            self.wfile.write(content)
+        except Exception as e:
+            print(f"Error serving file {file_path}: {str(e)}")
+            self.send_error(404, f"File not found: {file_path}")
             
     def guess_type(self, path):
         """Guess the type of a file based on its extension."""
-        base, ext = os.path.splitext(path)
-        if ext in self.extensions_map:
-            return self.extensions_map[ext]
-        ext = ext.lower()
-        if ext in self.extensions_map:
-            return self.extensions_map[ext]
+        content_type, _ = mimetypes.guess_type(path)
+        if content_type:
+            return content_type
+        
+        # Fallback for common web files
+        if path.endswith('.js'):
+            return 'application/javascript'
+        elif path.endswith('.css'):
+            return 'text/css'
+        elif path.endswith('.html'):
+            return 'text/html; charset=utf-8'
         else:
             return 'application/octet-stream'
 
