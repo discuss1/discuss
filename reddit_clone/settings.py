@@ -12,6 +12,10 @@ https://docs.djangoproject.com/en/3.0/ref/settings/
 
 import os
 import sys
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
 
 def get_env_variable(var_name, default=None):
     """Get environment variable or return default value"""
@@ -90,6 +94,15 @@ REST_FRAMEWORK = {
         'rest_framework.permissions.IsAuthenticatedOrReadOnly',
     ],
 }
+
+# REST Auth settings
+REST_AUTH_SERIALIZERS = {
+    'LOGIN_SERIALIZER': 'rest_auth.serializers.LoginSerializer',
+}
+
+# CSRF Configuration
+csrf_origins = get_env_variable('CSRF_TRUSTED_ORIGINS', 'https://work-1-woavzjjseoqpclwv.prod-runtime.all-hands.dev,https://work-2-woavzjjseoqpclwv.prod-runtime.all-hands.dev')
+CSRF_TRUSTED_ORIGINS = [origin.strip() for origin in csrf_origins.split(',') if origin.strip()]
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -288,13 +301,9 @@ CORS_ORIGIN_ALLOW_ALL = False
 CORS_ALLOW_CREDENTIALS = True
 CORS_PREFLIGHT_MAX_AGE = 86400
 
-CORS_ALLOWED_ORIGINS = [
-    "http://localhost:8000",
-    "http://localhost:4200",
-    "https://madhvi-n.github.io",
-    "https://work-1-otvuwyhcdtyibpym.prod-runtime.all-hands.dev",
-    "https://work-2-otvuwyhcdtyibpym.prod-runtime.all-hands.dev"
-]
+# CORS Configuration
+cors_origins = get_env_variable('CORS_ALLOWED_ORIGINS', 'https://work-1-woavzjjseoqpclwv.prod-runtime.all-hands.dev,https://work-2-woavzjjseoqpclwv.prod-runtime.all-hands.dev,http://localhost:4200,http://127.0.0.1:4200')
+CORS_ALLOWED_ORIGINS = [origin.strip() for origin in cors_origins.split(',') if origin.strip()]
 
 
 ####################################
