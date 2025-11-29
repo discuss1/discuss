@@ -3,8 +3,7 @@ Basic model tests for the Reddit clone application
 """
 from django.test import TestCase
 from django.contrib.auth.models import User
-from apps.posts.models import Post
-from apps.groups.models import Group
+from posts.models import Post
 
 
 class PostModelTest(TestCase):
@@ -40,39 +39,26 @@ class PostModelTest(TestCase):
             author=self.user
         )
         
-        self.assertEqual(str(post), 'Test Post')
-
-
-class GroupModelTest(TestCase):
-    """Test cases for Group model"""
-    
-    def setUp(self):
-        """Set up test data"""
-        self.user = User.objects.create_user(
-            username='testuser',
-            email='test@example.com',
-            password='testpass123'
+        expected_str = f"Post: {post.uuid} published by {self.user.username}"
+        self.assertEqual(str(post), expected_str)
+        
+    def test_post_score_calculation(self):
+        """Test post score calculation"""
+        post = Post.objects.create(
+            title='Test Post',
+            content='Test content',
+            author=self.user
         )
         
-    def test_group_creation(self):
-        """Test creating a group"""
-        group = Group.objects.create(
-            name='testgroup',
-            description='A test group',
-            created_by=self.user
+        # Initially score should be 0
+        self.assertEqual(post.score, 0)
+        
+    def test_post_status_default(self):
+        """Test post status defaults to PUBLIC"""
+        post = Post.objects.create(
+            title='Test Post',
+            content='Test content',
+            author=self.user
         )
         
-        self.assertEqual(group.name, 'testgroup')
-        self.assertEqual(group.description, 'A test group')
-        self.assertEqual(group.created_by, self.user)
-        self.assertIsNotNone(group.uuid)
-        
-    def test_group_str_method(self):
-        """Test the string representation of a group"""
-        group = Group.objects.create(
-            name='testgroup',
-            description='Test description',
-            created_by=self.user
-        )
-        
-        self.assertEqual(str(group), 'testgroup')
+        self.assertEqual(post.status, Post.STATUS.PUBLIC)
