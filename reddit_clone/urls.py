@@ -39,8 +39,8 @@ urlpatterns = [
     # Angular app routes - catch all routes under django_reddit/
     re_path(r'^django_reddit/.*$', TemplateView.as_view(template_name='index.html'), name='angular_app'),
     path('accounts/', include('allauth.urls')),
-    re_path(r'^rest-auth/', include('rest_auth.urls')),
-    re_path(r'^rest-auth/registration/', include('rest_auth.registration.urls')),
+    re_path(r'^rest-auth/', include('dj_rest_auth.urls')),
+    re_path(r'^rest-auth/registration/', include('dj_rest_auth.registration.urls')),
     path('', include('posts.urls')),
     path('', include('tags.urls')),
     path('', include('groups.urls')),

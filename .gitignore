@@ -129,6 +129,27 @@ dmypy.json
 .pyre/
 
 
-# Node modules
+# Node modules and Angular cache
 ang/
 node_modules/
+.angular/
+*/.angular/
+*/node_modules/
+
+# Angular build artifacts
+dist/
+*/dist/
+
+# Package lock files (optional - can be included for reproducible builds)
+package-lock.json
+*/package-lock.json
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
